@@ -1,0 +1,524 @@
+﻿<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Мессенджер для своих</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/prorus91-logo.svg" />
+    <link rel="shortcut icon" href="/assets/prorus91-logo.svg" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section id="boot-screen" class="boot-screen">
+        <div class="boot-card">
+          <img class="boot-logo" src="/assets/prorus91-logo.svg" alt="ProRus91" />
+          <p class="boot-title">Подключаем мессенджер...</p>
+          <p class="boot-subtitle">Восстанавливаем вашу сессию</p>
+        </div>
+      </section>
+
+      <section id="auth-screen" class="auth-card hidden">
+        <div class="auth-brand">
+          <img class="auth-logo" src="/assets/prorus91-logo.svg" alt="ProRus91" />
+          <div class="auth-brand-copy">
+            <h1>Мессенджер для своих</h1>
+            <p id="auth-subtitle" class="muted auth-subtitle">Закрытый чат для личных и групповых переписок.</p>
+          </div>
+        </div>
+
+        <div class="tabs auth-tabs" role="tablist" aria-label="Режим авторизации">
+          <button id="tab-login" class="tab active" type="button">Вход</button>
+          <button id="tab-register" class="tab" type="button">Регистрация</button>
+        </div>
+
+        <form id="auth-form" class="auth-form" autocomplete="off" novalidate>
+          <label class="auth-field">
+            <span class="field-label">Имя пользователя</span>
+            <input id="username-input" minlength="3" maxlength="32" required autofocus />
+            <span class="field-help">Используется для входа и поиска.</span>
+            <span id="username-error" class="field-error"></span>
+          </label>
+
+          <label id="display-name-row" class="auth-field hidden">
+            <span class="field-label">Отображаемое имя</span>
+            <input id="display-name-input" maxlength="48" />
+            <span class="field-help">Так вас будут видеть другие.</span>
+            <span id="display-name-error" class="field-error"></span>
+          </label>
+
+          <label class="auth-field">
+            <span class="field-label">Пароль</span>
+            <span class="input-wrap">
+              <input id="password-input" type="password" minlength="6" required />
+              <button id="password-toggle-btn" class="input-toggle-btn" type="button" aria-label="Показать пароль">Показать</button>
+            </span>
+            <span id="password-error" class="field-error"></span>
+          </label>
+
+          <label id="invite-key-row" class="auth-field hidden">
+            <span class="field-label">Ключ приглашения</span>
+            <span class="input-wrap">
+              <input id="invite-key-input" type="password" />
+              <button id="invite-key-toggle-btn" class="input-toggle-btn" type="button" aria-label="Показать ключ приглашения">Показать</button>
+            </span>
+            <span class="field-help">Нужен для доступа в закрытый мессенджер.</span>
+            <span id="invite-key-error" class="field-error"></span>
+          </label>
+
+          <button id="auth-submit" class="btn-primary auth-submit-btn" type="submit">Войти</button>
+
+          <p class="auth-switch-line">
+            <button id="auth-switch-btn" class="auth-switch-btn" type="button">Нет аккаунта? Зарегистрироваться</button>
+          </p>
+        </form>
+
+        <p id="auth-error" class="error auth-error"></p>
+        <p class="auth-trust muted tiny">Только по приглашению. Без рекламы и лишнего шума.</p>
+      </section>
+
+      <section id="app-screen" class="app hidden">
+        <aside class="sidebar">
+          <section id="me-profile-card" class="sidebar-section profile-card" role="button" tabindex="0" aria-label="Открыть мой профиль">
+            <div class="profile-main">
+              <img id="me-avatar" class="profile-avatar" alt="avatar" />
+              <div class="profile-meta">
+                <p id="me-display" class="me"></p>
+                <p id="me-username" class="muted tiny">@username</p>
+                <p id="socket-state" class="muted tiny">Не в сети</p>
+              </div>
+              <button id="logout-btn" class="logout-profile-btn" type="button" title="Выйти">
+                <span class="logout-profile-btn-icon" aria-hidden="true">⎋</span>
+                <span class="logout-profile-btn-label">Выйти</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="sidebar-section quick-actions">
+            <button id="new-chat-btn" class="btn-primary create-main-btn" type="button">Создать</button>
+          </section>
+
+          <section class="sidebar-section user-search-card">
+            <div class="section-head">
+              <h3 class="section-title">Поиск</h3>
+            </div>
+            <form id="search-form" class="search-form" autocomplete="off">
+              <input id="search-input" placeholder="Пользователь или чат" maxlength="64" />
+              <button class="btn-secondary" type="submit">Открыть</button>
+            </form>
+            <p id="search-feedback" class="muted tiny"></p>
+            <div id="sidebar-search-results" class="sidebar-search-results hidden"></div>
+          </section>
+
+          <section class="sidebar-section chat-list-section">
+            <div class="section-head">
+              <h3 class="section-title">Чаты</h3>
+              <button id="archive-toggle-btn" type="button" class="btn-ghost sidebar-archive-btn">Архив: Выкл</button>
+            </div>
+            <div id="chat-list-state" class="list-state">Чатов пока нет</div>
+            <div id="chat-list" class="chat-list"></div>
+          </section>
+        </aside>
+
+        <section class="chat-panel is-chat-empty">
+          <header class="chat-header">
+            <button
+              id="mobile-chat-back-btn"
+              type="button"
+              class="btn-ghost icon-btn mobile-chat-back-btn hidden"
+              title="Назад к чатам"
+              aria-label="Назад к списку чатов"
+            >
+              ←
+            </button>
+            <div id="chat-header-main" class="chat-header-main">
+              <img id="chat-header-avatar" class="chat-header-avatar hidden" alt="" />
+              <div class="chat-header-text">
+                <h2 id="chat-title"></h2>
+                <p id="chat-meta" class="muted tiny"></p>
+              </div>
+            </div>
+            <div class="chat-actions">
+              <button id="chat-pin-btn" type="button" class="btn-ghost icon-btn hidden" disabled title="Закрепить">📌</button>
+              <button id="chat-mute-btn" type="button" class="btn-ghost icon-btn hidden" disabled title="Без звука">🔕</button>
+              <button id="chat-archive-btn" type="button" class="btn-ghost icon-btn hidden" disabled title="В архив">🗂</button>
+              <button id="group-info-btn" type="button" class="btn-ghost icon-btn hidden" disabled title="Информация о группе">👥</button>
+            </div>
+          </header>
+
+          <form id="chat-search-form" class="chat-search-form hidden" autocomplete="off">
+            <input id="chat-search-input" maxlength="120" placeholder="Поиск в текущем чате" />
+            <button class="btn-secondary" type="submit">Поиск</button>
+            <button id="chat-search-clear-btn" class="btn-ghost" type="button" title="Очистить поиск">Сброс</button>
+          </form>
+          <div id="chat-search-results" class="search-results chat-search-results"></div>
+
+          <section id="messages-frame" class="messages-frame">
+            <div id="chat-drop-overlay" class="chat-drop-overlay hidden" aria-hidden="true">
+              <div class="chat-drop-overlay-content">
+                <p class="chat-drop-overlay-title">Отпустите файл для загрузки</p>
+                <p class="chat-drop-overlay-text">Поддерживаются фото и документы</p>
+              </div>
+            </div>
+            <div id="messages-state" class="messages-state is-chat-hint">
+              <p class="state-chat-hint">Выберите, кому хотели бы написать</p>
+            </div>
+            <div id="messages" class="messages hidden"></div>
+          </section>
+
+          <div id="reply-box" class="reply-box hidden">
+            <span id="reply-label"></span>
+            <button id="reply-cancel-btn" type="button" class="btn-ghost">Отмена</button>
+          </div>
+
+          <form id="composer" class="composer" autocomplete="off">
+            <div id="composer-attachment-preview" class="composer-attachment-preview hidden"></div>
+            <div class="composer-row">
+              <button id="composer-attach-btn" class="btn-ghost icon-btn composer-tool-btn" type="button" title="Вложение">📎</button>
+              <div id="composer-input-wrap" class="composer-input-wrap">
+                <input id="composer-input" maxlength="2000" placeholder="Введите сообщение" />
+              </div>
+              <button id="composer-emoji-btn" class="btn-ghost icon-btn composer-tool-btn composer-emoji-btn" type="button" title="Эмодзи">😊</button>
+              <button id="composer-send-btn" class="btn-primary composer-send-btn" type="submit">Отправить</button>
+            </div>
+            <input
+              id="composer-photo-input"
+              class="hidden"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+            />
+            <input
+              id="composer-doc-input"
+              class="hidden"
+              type="file"
+              accept=".pdf,.txt,.doc,.docx,.xls,.xlsx,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            />
+            <div id="composer-attach-menu" class="composer-attach-menu hidden" role="menu" aria-hidden="true">
+              <button id="composer-attach-photo-btn" class="composer-attach-menu-item" type="button" role="menuitem">Фото</button>
+              <button id="composer-attach-doc-btn" class="composer-attach-menu-item" type="button" role="menuitem">Документ</button>
+            </div>
+          </form>
+        </section>
+
+        <div id="ui-overlay" class="ui-overlay hidden"></div>
+
+        <aside id="group-panel" class="group-panel hidden" aria-hidden="true">
+          <header class="group-panel-header">
+            <div>
+              <h3 id="group-panel-title">Группа</h3>
+              <p id="group-panel-meta" class="muted tiny">Участники</p>
+            </div>
+            <button id="group-panel-close-btn" class="btn-ghost icon-btn" type="button" title="Закрыть">✕</button>
+          </header>
+
+          <p id="group-panel-feedback" class="group-panel-feedback"></p>
+
+          <form id="group-rename-form" class="group-rename-form hidden" autocomplete="off">
+            <label>
+              Название группы
+              <div class="inline-row">
+                <input id="group-rename-input" maxlength="120" />
+                <button id="group-rename-submit-btn" class="btn-secondary" type="submit">Сохранить</button>
+              </div>
+            </label>
+          </form>
+
+          <section class="group-members-block">
+            <div class="group-block-head">
+              <h4>Участники</h4>
+              <div class="group-block-head-actions">
+                <span id="group-members-count" class="tiny muted"></span>
+                <button id="group-add-open-btn" class="btn-secondary hidden" type="button">Добавить участника</button>
+              </div>
+            </div>
+            <div id="group-members-list" class="group-members-list"></div>
+            <div id="group-members-state" class="list-state">Загрузка участников...</div>
+          </section>
+
+          <footer class="group-panel-footer">
+            <button id="group-leave-btn" class="btn-danger" type="button">Выйти из группы</button>
+          </footer>
+        </aside>
+
+        <section id="group-add-modal" class="ui-modal hidden" aria-hidden="true">
+          <div class="ui-modal-card group-add-modal-card">
+            <header class="ui-modal-header">
+              <h3>Добавить участника</h3>
+              <button id="group-add-modal-close-btn" class="btn-ghost icon-btn" type="button">✕</button>
+            </header>
+            <div class="ui-modal-body group-add-modal-body">
+              <form id="group-add-modal-search-form" class="search-form" autocomplete="off">
+                <input
+                  id="group-add-modal-input"
+                  maxlength="64"
+                  placeholder="Поиск по username, @username или отображаемому имени"
+                />
+                <button class="btn-secondary" type="submit">Найти</button>
+              </form>
+
+              <p id="group-add-modal-state" class="muted tiny">Введите имя или username для поиска.</p>
+              <p id="group-add-modal-feedback" class="group-panel-feedback"></p>
+
+              <section class="group-add-modal-section">
+                <div class="create-flow-section-head">
+                  <h4>Недавние</h4>
+                  <span id="group-add-recent-count" class="tiny muted"></span>
+                </div>
+                <div id="group-add-modal-recent-list" class="create-user-list"></div>
+              </section>
+
+              <section class="group-add-modal-section">
+                <div class="create-flow-section-head">
+                  <h4>Результаты поиска</h4>
+                  <span id="group-add-results-count" class="tiny muted"></span>
+                </div>
+                <div id="group-add-modal-results-list" class="create-user-list"></div>
+              </section>
+
+              <section class="group-add-modal-section">
+                <div class="create-flow-section-head">
+                  <h4>Выбрано</h4>
+                </div>
+                <div id="group-add-modal-selected" class="selected-members"></div>
+              </section>
+            </div>
+            <footer class="ui-modal-footer">
+              <button id="group-add-modal-cancel-btn" class="btn-ghost" type="button">Отмена</button>
+              <button id="group-add-modal-submit-btn" class="btn-primary" type="button" disabled>Добавить</button>
+            </footer>
+          </div>
+        </section>
+
+        <aside id="profile-panel" class="profile-panel hidden" aria-hidden="true">
+          <header class="profile-panel-header">
+            <h3>Мой профиль</h3>
+            <button id="profile-panel-close-btn" class="btn-ghost icon-btn" type="button" title="Закрыть">✕</button>
+          </header>
+
+          <p id="profile-panel-feedback" class="profile-panel-feedback"></p>
+
+          <div class="profile-panel-body">
+            <section class="profile-panel-hero">
+              <img id="profile-panel-avatar" class="profile-panel-avatar" alt="Мой аватар" />
+              <input id="profile-avatar-file-input" class="hidden" type="file" accept="image/*" />
+              <div id="profile-avatar-edit-actions" class="profile-avatar-edit-actions hidden">
+                <button id="profile-avatar-change-btn" class="btn-secondary" type="button">Изменить фото</button>
+                <button id="profile-avatar-reset-btn" class="btn-ghost" type="button">Сбросить</button>
+              </div>
+            </section>
+
+            <section id="profile-view-mode" class="profile-mode">
+              <div class="profile-info-item">
+                <span class="profile-info-label">Имя</span>
+                <p id="profile-view-display" class="profile-info-value">—</p>
+              </div>
+              <div class="profile-info-item">
+                <span class="profile-info-label">Username</span>
+                <p id="profile-view-username" class="profile-info-value">@username</p>
+              </div>
+              <div class="profile-info-item">
+                <span class="profile-info-label">Статус</span>
+                <p id="profile-view-status" class="profile-info-value muted">Не в сети</p>
+              </div>
+              <div class="profile-info-item">
+                <span class="profile-info-label">О себе</span>
+                <p id="profile-view-bio" class="profile-info-value profile-bio-text muted">Пока без описания.</p>
+              </div>
+              <button id="profile-edit-btn" class="btn-secondary profile-edit-trigger" type="button">Изменить</button>
+            </section>
+
+            <form id="profile-edit-form" class="profile-mode hidden" autocomplete="off">
+              <label>
+                Отображаемое имя
+                <input id="profile-display-input" maxlength="48" required />
+              </label>
+              <label>
+                Username
+                <input id="profile-username-input" maxlength="32" required />
+              </label>
+              <label>
+                О себе
+                <textarea id="profile-bio-input" maxlength="300" rows="4" placeholder="Пара слов о себе"></textarea>
+              </label>
+              <p id="profile-edit-error" class="profile-edit-error"></p>
+              <div class="profile-edit-actions">
+                <button id="profile-edit-cancel-btn" class="btn-ghost" type="button">Отмена</button>
+                <button id="profile-edit-save-btn" class="btn-primary" type="submit">Сохранить</button>
+              </div>
+            </form>
+          </div>
+
+          <footer class="profile-panel-footer">
+            <button id="profile-panel-logout-btn" class="btn-danger" type="button">Выйти из аккаунта</button>
+          </footer>
+        </aside>
+
+        <aside id="contact-panel" class="profile-panel contact-panel hidden" aria-hidden="true">
+          <header class="profile-panel-header">
+            <h3>Профиль контакта</h3>
+            <button id="contact-panel-close-btn" class="btn-ghost icon-btn" type="button" title="Закрыть">✕</button>
+          </header>
+
+          <p id="contact-panel-feedback" class="profile-panel-feedback"></p>
+
+          <div class="profile-panel-body contact-panel-body">
+            <section class="profile-panel-hero contact-panel-hero">
+              <img id="contact-panel-avatar" class="profile-panel-avatar" alt="Аватар контакта" />
+              <div class="contact-panel-identity">
+                <h4 id="contact-panel-display" class="contact-panel-name">Пользователь</h4>
+                <p id="contact-panel-username" class="contact-panel-username">@username</p>
+                <p id="contact-panel-status" class="profile-info-value muted">Не в сети</p>
+              </div>
+            </section>
+
+            <section class="profile-mode">
+              <div class="profile-info-item">
+                <span class="profile-info-label">О себе</span>
+                <p id="contact-panel-bio" class="profile-info-value profile-bio-text muted">Пока без описания.</p>
+              </div>
+            </section>
+
+            <section class="profile-mode contact-panel-actions">
+              <button id="contact-panel-search-btn" class="btn-secondary" type="button">Поиск по чату</button>
+              <button id="contact-panel-mute-btn" class="btn-secondary" type="button">Без звука</button>
+              <button id="contact-panel-block-btn" class="btn-ghost" type="button" disabled title="Скоро">Заблокировать</button>
+            </section>
+          </div>
+        </aside>
+
+        <section id="create-group-modal" class="ui-modal hidden" aria-hidden="true">
+          <div class="ui-modal-card create-flow-card">
+            <header class="ui-modal-header">
+              <h3>Создать</h3>
+              <button id="create-group-close-btn" class="btn-ghost icon-btn" type="button" title="Закрыть">✕</button>
+            </header>
+
+            <div class="create-flow-tabs">
+              <button id="create-tab-direct-btn" class="tab active" type="button">Новый чат</button>
+              <button id="create-tab-group-btn" class="tab" type="button">Новая группа</button>
+            </div>
+
+            <div class="ui-modal-body create-flow-body">
+              <section id="create-direct-view" class="create-flow-view">
+                <label>
+                  Поиск пользователя
+                  <input id="create-direct-search-input" maxlength="64" placeholder="Имя, username или @username" />
+                </label>
+                <p id="create-direct-state" class="list-state"></p>
+
+                <div class="create-flow-section-head">
+                  <h4>Недавние</h4>
+                </div>
+                <div id="create-direct-recent-list" class="create-user-list"></div>
+
+                <div class="create-flow-section-head">
+                  <h4>Результаты поиска</h4>
+                </div>
+                <div id="create-direct-results" class="create-user-list"></div>
+              </section>
+
+              <section id="create-group-view" class="create-flow-view hidden">
+                <div id="create-group-step-users" class="create-group-step">
+                  <label>
+                    Добавить участников
+                    <input id="create-group-search-input" maxlength="64" placeholder="Имя, username или @username" />
+                  </label>
+                  <p id="create-group-search-state" class="list-state"></p>
+                  <div id="create-group-selected" class="selected-chips"></div>
+
+                  <div class="create-flow-section-head">
+                    <h4>Недавние</h4>
+                  </div>
+                  <div id="create-group-recent-list" class="create-user-list"></div>
+
+                  <div class="create-flow-section-head">
+                    <h4>Результаты поиска</h4>
+                  </div>
+                  <div id="create-group-search-results" class="create-user-list"></div>
+                </div>
+
+                <div id="create-group-step-title" class="create-group-step hidden">
+                  <div class="create-flow-section-head">
+                    <h4>Участники</h4>
+                  </div>
+                  <div id="create-group-members-preview" class="selected-chips"></div>
+                  <label>
+                    Название группы
+                    <input id="create-group-title-input" maxlength="120" required placeholder="Например, Команда" />
+                  </label>
+                  <p id="create-group-feedback" class="list-state"></p>
+                </div>
+              </section>
+            </div>
+
+            <footer class="ui-modal-footer">
+              <button id="create-group-cancel-btn" class="btn-ghost" type="button">Отмена</button>
+              <button id="create-group-back-btn" class="btn-ghost hidden" type="button">Назад</button>
+              <button id="create-group-next-btn" class="btn-secondary hidden" type="button">Далее</button>
+              <button id="create-group-submit-btn" class="btn-primary hidden" type="button">Создать группу</button>
+            </footer>
+          </div>
+        </section>
+
+        <section id="confirm-modal" class="ui-modal hidden" aria-hidden="true">
+          <div class="ui-modal-card confirm-card">
+            <header class="ui-modal-header">
+              <h3>Подтверждение</h3>
+            </header>
+            <div class="ui-modal-body">
+              <p id="confirm-modal-text" class="muted"></p>
+            </div>
+            <footer class="ui-modal-footer">
+              <button id="confirm-modal-cancel-btn" class="btn-ghost" type="button">Отмена</button>
+              <button id="confirm-modal-accept-btn" class="btn-danger" type="button">Подтвердить</button>
+            </footer>
+          </div>
+        </section>
+
+        <section id="message-edit-modal" class="ui-modal hidden" aria-hidden="true">
+          <div class="ui-modal-card message-edit-card">
+            <header class="ui-modal-header">
+              <h3>Изменить сообщение</h3>
+              <button id="message-edit-close-btn" class="btn-ghost icon-btn" type="button" title="Закрыть">✕</button>
+            </header>
+            <form id="message-edit-form" class="ui-modal-body" autocomplete="off">
+              <label>
+                Текст
+                <textarea id="message-edit-input" maxlength="2000" required></textarea>
+              </label>
+              <p id="message-edit-feedback" class="list-state"></p>
+              <footer class="ui-modal-footer">
+                <button id="message-edit-cancel-btn" class="btn-ghost" type="button">Отмена</button>
+                <button id="message-edit-save-btn" class="btn-primary" type="submit">Сохранить</button>
+              </footer>
+            </form>
+          </div>
+        </section>
+
+        <section id="message-forward-modal" class="ui-modal hidden" aria-hidden="true">
+          <div class="ui-modal-card message-forward-card">
+            <header class="ui-modal-header">
+              <h3>Переслать сообщение</h3>
+              <button id="message-forward-close-btn" class="btn-ghost icon-btn" type="button" title="Закрыть">✕</button>
+            </header>
+            <div class="ui-modal-body">
+              <div id="message-forward-preview" class="forward-preview muted"></div>
+              <label>
+                Поиск чата
+                <input id="message-forward-search-input" maxlength="120" placeholder="Введите имя или название чата" />
+              </label>
+              <p id="message-forward-feedback" class="list-state"></p>
+              <div id="message-forward-list" class="forward-chat-list"></div>
+            </div>
+            <footer class="ui-modal-footer">
+              <button id="message-forward-cancel-btn" class="btn-ghost" type="button">Отмена</button>
+              <button id="message-forward-send-btn" class="btn-primary" type="button" disabled>Переслать</button>
+            </footer>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
