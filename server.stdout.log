@@ -1,0 +1,7 @@
+
+> friends-messenger@1.0.0 start
+> node server.js
+
+Messenger MVP started on http://localhost:3000
+Database: C:\Users\denve\OneDrive\Рабочий стол\Messenger\data\messenger.db
+Invite key: friends-invite-2026

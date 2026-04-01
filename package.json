@@ -1,0 +1,25 @@
+{
+  "name": "friends-messenger",
+  "version": "1.0.0",
+  "description": "Private messenger for a small trusted group",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node scripts/seed.js",
+    "smoke:stage2": "node scripts/smoke-stage2.js",
+    "smoke:ui": "node scripts/ui-smoke.js"
+  },
+  "dependencies": {
+    "@joeattardi/emoji-button": "^4.6.4",
+    "dotenv": "^16.5.0",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^7.1.0",
+    "multer": "^2.1.1",
+    "sqlite3": "^5.1.7",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.58.2"
+  }
+}
